@@ -53,18 +53,22 @@ public class PhabricatorNotifier extends Notifier {
     private final boolean commentOnSuccess;
     private final boolean uberallsEnabled;
     private final boolean commentWithConsoleLinkOnFailure;
+    private final boolean resignReviewerOnSuccess;
+    
     private final String commentFile;
     private final String commentSize;
 
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
     public PhabricatorNotifier(boolean commentOnSuccess, boolean uberallsEnabled,
-                               String commentFile, String commentSize, boolean commentWithConsoleLinkOnFailure) {
+                               String commentFile, String commentSize, boolean commentWithConsoleLinkOnFailure, 
+                               boolean resignReviewerOnSuccess) {
         this.commentOnSuccess = commentOnSuccess;
         this.uberallsEnabled = uberallsEnabled;
         this.commentFile = commentFile;
         this.commentSize = commentSize;
         this.commentWithConsoleLinkOnFailure = commentWithConsoleLinkOnFailure;
+        this.resignReviewerOnSuccess = resignReviewerOnSuccess;
     }
 
     public BuildStepMonitor getRequiredMonitorService() {
@@ -167,6 +171,14 @@ public class PhabricatorNotifier extends Notifier {
         }
 
         String commentAction = "none";
+        
+      //TODO: changed by sbenjamin on 2015-06-17
+        if(this.resignReviewerOnSuccess){
+        	if (build.getResult().isBetterOrEqualTo(Result.SUCCESS)){
+            	commentAction = "resign";
+            }	
+        }
+        
         if (runHarbormaster) {
             logger.println("Sending build result to Harbormaster with PHID '" + phid + "', success: " + harbormasterSuccess);
             try {
@@ -340,6 +352,11 @@ public class PhabricatorNotifier extends Notifier {
     @SuppressWarnings("UnusedDeclaration")
     public String getCommentFile() {
         return commentFile;
+    }
+    
+    @SuppressWarnings("UnusedDeclaration")
+    public boolean isResignReviewerOnSuccess() {
+        return resignReviewerOnSuccess;
     }
 
     // Overridden for better type safety.
